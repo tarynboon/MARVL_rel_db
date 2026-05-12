@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Database (contains lab data)
+marvl.db
+
+# Processed data files
+soar_clean.csv
+soar_issues.csv
+
+# Raw exports (re-export from Google Sheets as needed)
+SOAR Video Inventory - Data.csv
+SOAR Video Inventory - CV-Dataset.csv
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+.DS_Store
+MARVL Database Memo (schema v1.2).docx
