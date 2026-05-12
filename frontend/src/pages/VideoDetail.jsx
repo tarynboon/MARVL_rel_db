@@ -67,10 +67,10 @@ export default function VideoDetail() {
   const val = (key) => editing ? edits[key] ?? '' : video[key];
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="w-full max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1">
-          ← Back
+        <button onClick={() => navigate('/')} className="text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1">
+          ← Back to Browse
         </button>
         <div className="flex gap-2">
           {editing ? (
@@ -86,6 +86,20 @@ export default function VideoDetail() {
               <button onClick={() => setDeleteConfirm(true)} className="px-4 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50">Delete</button>
             </>
           )}
+        </div>
+      </div>
+
+      <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-indigo-700">
+          Entry added {video.date_added ?? 'unknown date'} · Edit any field below, or delete this entry.
+        </p>
+        <div className="flex gap-2">
+          <button onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-white border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors">
+            ← Browse
+          </button>
+          <button onClick={() => navigate('/add')} className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            + Add Another
+          </button>
         </div>
       </div>
 
@@ -109,9 +123,9 @@ export default function VideoDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {FIELDS.map(({ key, label, wide }) => (
-            <div key={key} className={wide ? 'md:col-span-2' : ''}>
+            <div key={key} className={wide ? 'sm:col-span-2 xl:col-span-3' : ''}>
               <label className="block text-xs font-medium text-slate-500 mb-1">{label}</label>
               {editing ? (
                 <input

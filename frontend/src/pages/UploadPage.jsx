@@ -32,12 +32,11 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="w-full max-w-2xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-slate-900">Bulk Upload</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Export the Data tab from the SOAR Google Sheet as CSV and upload here.
-          The file will be cleaned and ingested automatically.
+          Upload any CSV with video metadata. The file will be cleaned and ingested automatically.
         </p>
       </div>
 
@@ -59,7 +58,7 @@ export default function UploadPage() {
         ) : (
           <div>
             <p className="text-slate-500">Drop a CSV file here or click to browse</p>
-            <p className="text-xs text-slate-400 mt-2">Must be exported from the SOAR Data tab</p>
+            <p className="text-xs text-slate-400 mt-2">CSV with columns: dataset, video_name, video_ext, video_path, length, fps, anon_status, procedure, NumID</p>
           </div>
         )}
       </div>

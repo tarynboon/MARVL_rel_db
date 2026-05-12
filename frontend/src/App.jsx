@@ -17,8 +17,8 @@ function Nav() {
         </span>
         <nav className="flex gap-1">
           <NavLink to="/" end className={cls}>Browse</NavLink>
-          <NavLink to="/upload" className={cls}>Upload</NavLink>
-          <NavLink to="/add" className={cls}>Add Entry</NavLink>
+          <NavLink to="/upload" className={cls}>Upload Bulk</NavLink>
+          <NavLink to="/add" className={cls}>Add Single Entry</NavLink>
         </nav>
       </div>
     </header>

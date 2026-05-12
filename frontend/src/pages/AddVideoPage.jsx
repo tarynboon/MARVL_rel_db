@@ -45,7 +45,7 @@ export default function AddVideoPage() {
   };
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="w-full max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-slate-900">Add Video Entry</h1>
         <p className="text-sm text-slate-500 mt-1">Manually add a single video to the database.</p>
@@ -54,11 +54,11 @@ export default function AddVideoPage() {
       {error && <p className="text-sm text-red-500 bg-red-50 px-4 py-2 rounded-lg">{error}</p>}
 
       <form onSubmit={submit} className="bg-white rounded-xl border border-slate-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {FIELDS.map(({ key, label, required, wide, type, optKey, opts, placeholder }) => {
             const fieldOpts = opts ?? (optKey ? options[optKey] : null);
             return (
-              <div key={key} className={wide ? 'md:col-span-2' : ''}>
+              <div key={key} className={wide ? 'sm:col-span-2 xl:col-span-3' : ''}>
                 <label className="block text-xs font-medium text-slate-500 mb-1">
                   {label} {required && <span className="text-red-400">*</span>}
                 </label>

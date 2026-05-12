@@ -16,6 +16,7 @@ SOAR Video Inventory - Data.csv
 SOAR Video Inventory - CV-Dataset.csv
 
 # Node
+node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.env.local
