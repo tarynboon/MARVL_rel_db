@@ -27,7 +27,7 @@ function Nav() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <div className="min-h-screen bg-slate-50">
         <Nav />
         <main className="max-w-7xl mx-auto px-6 py-8">
