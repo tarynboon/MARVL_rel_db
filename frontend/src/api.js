@@ -17,7 +17,7 @@ export const api = {
     const q = new URLSearchParams(
       Object.fromEntries(Object.entries(params).filter(([, v]) => v))
     );
-    return req(`/videos?${q}`);
+    return req(`/videos/?${q}`);
   },
 
   getVideo: (id) => req(`/videos/${id}`),
