@@ -1,7 +1,9 @@
 import sqlite3
+import os
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / "marvl.db"
+_default = Path(__file__).parent.parent / "marvl.db"
+DB_PATH = Path(os.getenv("DB_PATH", str(_default)))
 
 
 def get_conn():
