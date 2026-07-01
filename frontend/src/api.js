@@ -23,7 +23,7 @@ export const api = {
   getVideo: (id) => req(`/videos/${id}`),
 
   createVideo: (data) =>
-    req('/videos', {
+    req('/videos/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -41,6 +41,6 @@ export const api = {
   uploadCsv: (file) => {
     const form = new FormData();
     form.append('file', file);
-    return req('/upload', { method: 'POST', body: form });
+    return req('/upload/', { method: 'POST', body: form });
   },
 };
