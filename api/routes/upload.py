@@ -22,8 +22,13 @@ async def upload_csv(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be a .csv")
 
     contents = await file.read()
+    # Skip leading blank rows (e.g. the banner row Google Sheets "Tables" adds
+    # above the real header when exported to CSV), which would otherwise be
+    # read as the header and push real column names into the first data row.
+    lines = contents.decode("utf-8-sig").splitlines()
+    start = next((i for i, line in enumerate(lines) if line.strip(",").strip()), 0)
     try:
-        df = pd.read_csv(io.BytesIO(contents), dtype=str)
+        df = pd.read_csv(io.StringIO("\n".join(lines[start:])), dtype=str)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Could not parse CSV: {e}")
 
