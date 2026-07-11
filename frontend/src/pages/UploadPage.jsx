@@ -1,12 +1,19 @@
 import { useState, useRef } from 'react';
 import { api } from '../api';
 
+const STATUS_STYLE = {
+  inserted: { label: 'Added', cls: 'text-green-600' },
+  skipped: { label: 'Skipped (duplicate)', cls: 'text-amber-600' },
+  error: { label: 'Not added', cls: 'text-red-600' },
+};
+
 export default function UploadPage() {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [warningDismissed, setWarningDismissed] = useState(false);
   const inputRef = useRef();
 
   const handleFile = (f) => {
@@ -24,6 +31,7 @@ export default function UploadPage() {
       const res = await api.uploadCsv(file);
       setResult(res);
       setFile(null);
+      setWarningDismissed(false);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -75,47 +83,92 @@ export default function UploadPage() {
         </button>
       )}
 
-      {result && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-          <h2 className="font-semibold text-slate-900">Ingestion Complete</h2>
-          <div className="grid grid-cols-3 gap-4">
-            {[['Inserted', result.inserted, 'text-green-600 bg-green-50'], ['Skipped', result.skipped, 'text-slate-600 bg-slate-50'], ['Errors', result.errors, 'text-red-600 bg-red-50']].map(([label, count, cls]) => (
-              <div key={label} className={`rounded-lg p-4 text-center ${cls}`}>
-                <p className="text-2xl font-bold">{count}</p>
-                <p className="text-sm font-medium mt-0.5">{label}</p>
-              </div>
-            ))}
-          </div>
+      {result && (() => {
+        const rows = result.row_results || [];
+        const issuesByRow = {};
+        (result.issues || []).forEach(iss => {
+          (issuesByRow[iss.row] ??= []).push(iss);
+        });
+        const inFileDupes = (result.issues || []).filter(i => i.field === 'video_name+institution');
+        const showWarning = !warningDismissed && (result.skipped > 0 || inFileDupes.length > 0);
 
-          {result.issues_count > 0 && (
-            <div>
-              <p className="text-sm font-medium text-slate-700 mb-2">
-                {result.issues_count} issues detected {result.issues_count > 50 ? '(showing first 50)' : ''}
-              </p>
-              <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-100">
-                <table className="w-full text-xs">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-slate-500">Row</th>
-                      <th className="px-3 py-2 text-left text-slate-500">Field</th>
-                      <th className="px-3 py-2 text-left text-slate-500">Issue</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {result.issues.map((issue, i) => (
-                      <tr key={i}>
-                        <td className="px-3 py-2 text-slate-400">{issue.row}</td>
-                        <td className="px-3 py-2 font-medium text-slate-700">{issue.field}</td>
-                        <td className="px-3 py-2 text-slate-500">{issue.issue}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        return (
+          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+            <h2 className="font-semibold text-slate-900">Ingestion Complete</h2>
+
+            {showWarning && (
+              <div className="relative bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+                <button
+                  onClick={() => setWarningDismissed(true)}
+                  className="absolute top-2 right-3 text-amber-500 hover:text-amber-700 text-lg leading-none"
+                  aria-label="Dismiss"
+                >
+                  &times;
+                </button>
+                <p className="font-medium mb-1">Duplicate entries detected</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {result.skipped > 0 && (
+                    <li>{result.skipped} row{result.skipped === 1 ? '' : 's'} skipped — a video with that video_id already exists in the database.</li>
+                  )}
+                  {inFileDupes.length > 0 && (
+                    <li>{inFileDupes.length} row{inFileDupes.length === 1 ? '' : 's'} in this file share the same video_name + institution as another row.</li>
+                  )}
+                </ul>
               </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                ['Inserted', result.inserted, 'text-green-600 bg-green-50', 'New rows added'],
+                ['Skipped', result.skipped, 'text-slate-600 bg-slate-50', 'Already existed (duplicate video_id)'],
+                ['Errors', result.errors, 'text-red-600 bg-red-50', 'Rejected by the database'],
+              ].map(([label, count, cls, caption]) => (
+                <div key={label} className={`rounded-lg p-4 text-center ${cls}`}>
+                  <p className="text-2xl font-bold">{count}</p>
+                  <p className="text-sm font-medium mt-0.5">{label}</p>
+                  <p className="text-[11px] opacity-70 mt-0.5">{caption}</p>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      )}
+
+            {rows.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-slate-700 mb-2">Row-by-row result</p>
+                <div className="max-h-96 overflow-y-auto rounded-lg border border-slate-100">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-slate-500">Row</th>
+                        <th className="px-3 py-2 text-left text-slate-500">Video</th>
+                        <th className="px-3 py-2 text-left text-slate-500">Status</th>
+                        <th className="px-3 py-2 text-left text-slate-500">Why</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {rows.map((r, i) => {
+                        const status = STATUS_STYLE[r.status] || { label: r.status, cls: 'text-slate-500' };
+                        const notes = (issuesByRow[r.row] || []).map(iss => iss.issue).join('; ');
+                        return (
+                          <tr key={i} className={r.status === 'error' ? 'bg-red-50/50' : ''}>
+                            <td className="px-3 py-2 text-slate-400">{r.row}</td>
+                            <td className="px-3 py-2 font-medium text-slate-700">{r.video_name || r.video_id || '—'}</td>
+                            <td className={`px-3 py-2 font-medium ${status.cls}`}>{status.label}</td>
+                            <td className="px-3 py-2 text-slate-500">
+                              {r.detail && <div>{r.detail}</div>}
+                              {notes && <div className="text-slate-400 text-[11px] mt-0.5">{notes}</div>}
+                              {!r.detail && !notes && '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

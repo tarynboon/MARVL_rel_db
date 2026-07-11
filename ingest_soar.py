@@ -126,6 +126,22 @@ def make_video_id(num_id: int | None, video_name: str | None) -> str:
     return f"VID_UNKNOWN_{datetime.now().strftime('%f')}"
 
 
+def humanize_insert_error(e: Exception, row: dict) -> str:
+    """Turn a raw sqlite3/psycopg2 constraint error into a short, row-specific message."""
+    msg = str(e)
+    m = re.match(r"NOT NULL constraint failed: videos\.(\w+)", msg)
+    if m:
+        return f"Missing required field '{m.group(1)}'"
+    m = re.match(r"CHECK constraint failed: (\w+)", msg)
+    if m:
+        col = m.group(1)
+        return f"'{row.get(col)}' is not an allowed value for '{col}'"
+    m = re.match(r"UNIQUE constraint failed: videos\.(\w+)", msg)
+    if m:
+        return f"Duplicate value for '{m.group(1)}'"
+    return msg
+
+
 def validate_row(row: dict) -> list[str]:
     """Return list of warning strings for any constraint violations."""
     warnings = []
@@ -261,6 +277,8 @@ def ingest(csv_path: str, conn, dry_run: bool = False, pg: bool = False):
     log.info(f"Loaded {len(df)} rows from {csv_path}")
 
     inserted = skipped = errors = 0
+    # One entry per data row, 0-based to line up with clean_soar's issue rows.
+    row_results = []
 
     cursor = conn.cursor()
 
@@ -270,6 +288,10 @@ def ingest(csv_path: str, conn, dry_run: bool = False, pg: bool = False):
         except Exception as e:
             log.error(f"Row {i}: transform failed — {e}")
             errors += 1
+            row_results.append({
+                "row": i - 1, "video_id": None, "video_name": raw.get('video_name'),
+                "status": "error", "detail": f"transform failed: {e}",
+            })
             continue
 
         # Validate against schema constraints
@@ -315,19 +337,31 @@ def ingest(csv_path: str, conn, dry_run: bool = False, pg: bool = False):
             if cursor.rowcount == 0:
                 log.debug(f"Row {i} ({row['video_id']}): skipped (already exists)")
                 skipped += 1
+                row_results.append({
+                    "row": i - 1, "video_id": row.get('video_id'), "video_name": row.get('video_name'),
+                    "status": "skipped", "detail": "A video with this video_id already exists",
+                })
             else:
                 inserted += 1
+                row_results.append({
+                    "row": i - 1, "video_id": row.get('video_id'), "video_name": row.get('video_name'),
+                    "status": "inserted", "detail": None,
+                })
 
         except Exception as e:
             log.error(f"Row {i} ({row.get('video_id')}): INSERT failed — {e}")
             errors += 1
+            row_results.append({
+                "row": i - 1, "video_id": row.get('video_id'), "video_name": row.get('video_name'),
+                "status": "error", "detail": humanize_insert_error(e, row),
+            })
 
     if not dry_run:
         conn.commit()
 
     log.info("─" * 50)
     log.info(f"Done.  Inserted: {inserted}  |  Skipped: {skipped}  |  Errors: {errors}")
-    return {"inserted": inserted, "skipped": skipped, "errors": errors}
+    return {"inserted": inserted, "skipped": skipped, "errors": errors, "row_results": row_results}
 
 
 # ── CLI ────────────────────────────────────────────────────────────────────────

@@ -84,6 +84,7 @@ async def upload_csv(file: UploadFile = File(...)):
         "inserted": counts["inserted"],
         "skipped": counts["skipped"],
         "errors": counts["errors"],
+        "row_results": counts["row_results"],
         "issues_count": len(issues),
         "issues": issues[:50],
     }
