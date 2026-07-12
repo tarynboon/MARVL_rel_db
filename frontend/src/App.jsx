@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, Link } from 'react-router-dom';
 import SearchPage from './pages/SearchPage';
 import VideoDetail from './pages/VideoDetail';
 import UploadPage from './pages/UploadPage';
@@ -12,9 +12,9 @@ function Nav() {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-        <span className="font-semibold text-slate-900 tracking-tight">
+        <Link to="/" className="font-semibold text-slate-900 tracking-tight hover:text-indigo-600 transition-colors">
           MARVL Video Database
-        </span>
+        </Link>
         <nav className="flex gap-1">
           <NavLink to="/" end className={cls}>Browse</NavLink>
           <NavLink to="/upload" className={cls}>Upload Bulk</NavLink>
