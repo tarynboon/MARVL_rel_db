@@ -17,6 +17,26 @@ def _make_video_id(num_id, video_name):
     return f"VID_{safe}"
 
 
+def _humanize_db_error(e: Exception, video_id: str) -> str:
+    """Turn a raw sqlite constraint error into a message the user can act on."""
+    msg = str(e)
+    m = re.match(r"UNIQUE constraint failed: videos\.(\w+)", msg)
+    if m:
+        if m.group(1) == "video_id":
+            return (
+                f"A video with this name/ID already exists (video_id: {video_id}). "
+                "Try a different Video Name, or set a Numeric ID to make it unique."
+            )
+        return f"A video with this {m.group(1)} already exists."
+    m = re.match(r"NOT NULL constraint failed: videos\.(\w+)", msg)
+    if m:
+        return f"'{m.group(1)}' is required"
+    m = re.match(r"CHECK constraint failed: (\w+)", msg)
+    if m:
+        return f"That value isn't allowed for '{m.group(1)}'"
+    return msg
+
+
 @router.get("/")
 def list_videos(
     institution: Optional[str] = None,
@@ -96,7 +116,7 @@ def create_video(video: VideoCreate):
         conn.commit()
     except Exception as e:
         conn.close()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=_humanize_db_error(e, video_id))
     conn.close()
     return {"video_id": video_id}
 
@@ -114,11 +134,15 @@ def update_video(video_id: str, update: VideoUpdate):
         return {"message": "No fields to update"}
 
     set_clause = ", ".join(f"{k} = ?" for k in fields)
-    conn.execute(
-        f"UPDATE videos SET {set_clause} WHERE video_id = ?",
-        list(fields.values()) + [video_id],
-    )
-    conn.commit()
+    try:
+        conn.execute(
+            f"UPDATE videos SET {set_clause} WHERE video_id = ?",
+            list(fields.values()) + [video_id],
+        )
+        conn.commit()
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=400, detail=_humanize_db_error(e, video_id))
     conn.close()
     return {"message": "Updated", "video_id": video_id}
 
